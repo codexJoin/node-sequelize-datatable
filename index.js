@@ -11,7 +11,8 @@ module.exports = async (body) => {
     if (search) {
         query = _.map(body.columns, function(value, key) {
             return {
-                [value.data]: {
+                // the $ $ fix the search in relationships.
+                [`$${value.data}$`]: {
                     [Op.like]: '%' + search + '%'
                 }
             };
@@ -32,13 +33,18 @@ module.exports = async (body) => {
         index = 0;
         order = 'asc';
     }
+
     column = await getColumn(attributes, index);
+    // in case of relations, i need to explode the column name.
+    column = column.split('.');
+
     pagination = {
         attributes: attributes,
         offset: parseInt(body.start),
         limit: parseInt(body.length),
         order: [
-            [column, order]
+            // ...column because this is array, so i need to do propagation now.
+            [...column, order]
         ],
     };
     return datatableObj = _.merge(searchStr, pagination);
